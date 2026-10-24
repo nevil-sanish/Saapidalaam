@@ -28,3 +28,6 @@ Google login via Supabase Auth; on callback we resolve the profile (BR-40/41) an
 
 ## D-16 — Jobs run lazily on requests (2026-10-24)
 `tick()` (lock at cutoff, no-shows, extend weekly patterns) runs at most once a minute on page loads instead of pg_cron. Upgrade: pg_cron or a Render cron hitting a tick endpoint.
+
+## D-17 — Google-only, college-domain-only sign-in for every role (2026-10-24)
+Owner asked for Google auth only from @iiitkottayam.ac.in. Password login and the production demo seed are removed; the allowlist only assigns staff/manager/admin roles. Supersedes D-10 (magic link for non-college staff).
