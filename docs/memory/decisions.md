@@ -17,3 +17,14 @@ Seeded B 07:30–09:30, L 12:30–14:00, S 16:30–17:30, D 19:30–21:30. Admin
 
 ## D-13 — QR verified in Postgres (2026-10-24)
 HMAC check runs in SQL (pgcrypto `hmac`) inside the `scan_qr` RPC instead of an Edge Function, so verify + serve is one round trip and one transaction.
+
+## D-14 — Server-side data access instead of client RLS policies (2026-10-24)
+Context: 1-hour build; RLS policies × 4 roles + pgTAP is days of work.
+Decision: browser never talks to Supabase data APIs. All tables have RLS enabled with **no** policies (deny-all for anon/authenticated); the Next.js server connects as owner and enforces roles in `requireRole` + per-function checks.
+Consequences: the service connection string is a crown-jewel secret (server env only). Per-role RLS policies + pgTAP remain a hardening task (T-60).
+
+## D-15 — App session cookie, Supabase only as identity provider (2026-10-24)
+Google login via Supabase Auth; on callback we resolve the profile (BR-40/41) and issue our own HMAC-signed httpOnly cookie. Password login stays for allowlisted / demo accounts without Google.
+
+## D-16 — Jobs run lazily on requests (2026-10-24)
+`tick()` (lock at cutoff, no-shows, extend weekly patterns) runs at most once a minute on page loads instead of pg_cron. Upgrade: pg_cron or a Render cron hitting a tick endpoint.

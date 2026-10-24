@@ -9,3 +9,4 @@ supabase/.branches/
 *.tsbuildinfo
 next-env.d.ts
 data/
+.next-build/
