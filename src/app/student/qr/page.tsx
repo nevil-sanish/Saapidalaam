@@ -18,15 +18,21 @@ export default async function QrPage({ searchParams }: { searchParams: Promise<{
     <>
       <h1>Counter QR</h1>
       <Flash sp={sp} />
-      <div className="card">
-        <p style={{ textAlign: "center" }}><b>{user.full_name}</b> · {user.roll_no ?? "no roll no"}</p>
-        <RotatingQr />
-        <p className="muted" style={{ textAlign: "center" }}>Screenshots stop working within 30 seconds.</p>
-      </div>
-      <div className="card">
-        <h2>Backup code</h2>
-        <p className="muted">For a dead phone: tell the counter staff your 8-character code. Backup-code scans are flagged (BR-31). Generating a new code invalidates the old one.</p>
-        <form action={newCode}><button className="secondary">Generate new backup code</button></form>
+      <div className="qr-wrap">
+        <section className="card dark qr-card">
+          <RotatingQr />
+          <div className="qr-who">
+            <b>{user.full_name}</b>
+            <span className="muted">{user.roll_no ?? "No roll number"}</span>
+          </div>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}>Show this at the counter. Screenshots stop working within 30 seconds.</p>
+        </section>
+        <section className="card lilac">
+          <h2>Backup code</h2>
+          <p>Phone dead? Tell the counter staff your 8-character backup code instead. Scans with a backup code are flagged for review.</p>
+          <p style={{ color: "rgba(37,37,37,.72)" }}>Generating a new code makes the old one stop working.</p>
+          <form action={newCode}><button>Generate new backup code</button></form>
+        </section>
       </div>
     </>
   );

@@ -5,6 +5,8 @@ import { addDays } from "@/lib/time";
 import { Flash } from "@/components/Shell";
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DOW_LONG = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const ART: Record<string, string> = { B: "🥞", L: "🍛", S: "☕", D: "🍲" };
 
 /** Collect `<prefix><key>_<slotId>` selects into PatternRules, ignoring "none". */
 function rulesFrom(fd: FormData, prefix: string): PatternRules {
@@ -44,7 +46,7 @@ async function saveMonthly(fd: FormData) {
 function DietSelect({ name, value, label }: { name: string; value?: Diet; label: string }) {
   return (
     <select name={name} defaultValue={value ?? "none"} aria-label={label}>
-      <option value="none">—</option><option value="veg">Veg</option><option value="nonveg">Non-veg</option>
+      <option value="none">Skip</option><option value="veg">Veg</option><option value="nonveg">Non-veg</option>
     </select>
   );
 }
@@ -64,51 +66,56 @@ export default async function PatternPage({ searchParams }: { searchParams: Prom
   const weekly = active?.kind === "weekly" ? active.rules : undefined;
   const monthly = active?.kind === "monthly" && active.month === month ? active.rules : undefined;
 
+  const dayRow = (key: string, title: string, sub: string | null, rules: PatternRules | undefined, prefix: string) => (
+    <div key={key} className="pattern-day">
+      <div className="pd-name"><b>{title}</b>{sub && <small className="muted">{sub}</small>}</div>
+      {ss.map((s) => (
+        <label key={s.id} className="pd-slot">
+          <span><span aria-hidden>{ART[s.code] ?? "🍽️"}</span> {s.label}</span>
+          <DietSelect name={`${prefix}${key}_${s.id}`} value={pick(rules, key, s)} label={`${title}${sub ? ` ${sub}` : ""} ${s.label}`} />
+        </label>
+      ))}
+    </div>
+  );
+
   return (
     <>
       <h1>Meal pattern</h1>
       <Flash sp={sp} />
-      <div className="card">
-        <h2>Current</h2>
-        {active ? <p>Active <b>{active.kind}</b> pattern{active.month && ` for ${active.month.slice(0, 7)}`}, saved {active.created_at.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}.</p>
-          : <p className="muted">No active pattern. Meals are not booked by default (BR-01).</p>}
-        <p className="muted">Saving a new pattern replaces the old one and cancels its future pattern bookings that are still before cutoff (BR-05). One-off bookings and cancellations are kept.</p>
-      </div>
+      <section className="card mint">
+        <h2>Your current pattern</h2>
+        {active ? <p>You have an active <b>{active.kind}</b> pattern{active.month && ` for ${active.month.slice(0, 7)}`}, saved on {active.created_at.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}.</p>
+          : <p>No active pattern. Meals are not booked by default.</p>}
+        <p style={{ margin: 0, color: "rgba(37,37,37,.72)" }}>Saving a new pattern replaces the old one and cancels its future pattern bookings that are still before cutoff. One-off bookings and cancellations are kept.</p>
+      </section>
 
       <form action={saveWeekly} className="card">
-        <h2>Weekly pattern</h2>
-        <div className="scroll"><table>
-          <thead><tr><th>Day</th>{ss.map((s) => <th key={s.id}>{s.label}</th>)}</tr></thead>
-          <tbody>{DOW.map((d, i) => (
-            <tr key={d}><th>{d}</th>{ss.map((s) => <td key={s.id}><DietSelect name={`w_${i + 1}_${s.id}`} value={pick(weekly, String(i + 1), s)} label={`${d} ${s.label}`} /></td>)}</tr>
-          ))}</tbody>
-        </table></div>
-        <p><button>Save weekly pattern</button></p>
+        <div className="section-head"><h2>Weekly pattern</h2><span className="muted">Repeats every week</span></div>
+        <div className="pattern">
+          {DOW.map((d, i) => dayRow(String(i + 1), DOW_LONG[i], null, weekly, "w_"))}
+        </div>
+        <p style={{ marginTop: 16 }}><button>Save weekly pattern</button></p>
       </form>
 
-      <div className="card">
-        <h2>Monthly package</h2>
-        {months.length === 0 ? <p className="muted">No monthly menu published yet (BR-07).</p> : (
-          <form method="get" className="inline">
+      <section className="card">
+        <div className="section-head"><h2>Monthly package</h2><span className="muted">Pick every meal for one month</span></div>
+        {months.length === 0 ? <p className="muted">No monthly menu has been published yet.</p> : (
+          <form method="get" className="inline" style={{ marginBottom: 16 }}>
             <label htmlFor="month">Month</label>
             <select id="month" name="month" defaultValue={month}>{months.map((m) => <option key={m} value={m}>{m.slice(0, 7)}</option>)}</select>
-            <button className="secondary">Open</button>
+            <button className="secondary">Open month</button>
           </form>
         )}
         {month && (
           <form action={saveMonthly}>
             <input type="hidden" name="month" value={month} />
-            <div className="scroll"><table>
-              <thead><tr><th>Date</th>{ss.map((s) => <th key={s.id}>{s.label}</th>)}</tr></thead>
-              <tbody>{monthDates.map((d) => (
-                <tr key={d}><th>{d.slice(8)} {DOW[(new Date(d + "T00:00:00Z").getUTCDay() + 6) % 7]}</th>
-                  {ss.map((s) => <td key={s.id}><DietSelect name={`m_${d}_${s.id}`} value={pick(monthly, d, s)} label={`${d} ${s.label}`} /></td>)}</tr>
-              ))}</tbody>
-            </table></div>
-            <p><button>Save monthly package</button> <span className="muted">Dates already past cutoff are skipped.</span></p>
+            <div className="pattern">
+              {monthDates.map((d) => dayRow(d, `${Number(d.slice(8))}`, DOW[(new Date(d + "T00:00:00Z").getUTCDay() + 6) % 7], monthly, "m_"))}
+            </div>
+            <p className="row" style={{ marginTop: 16 }}><button>Save monthly package</button> <span className="muted">Dates already past cutoff are skipped.</span></p>
           </form>
         )}
-      </div>
+      </section>
     </>
   );
 }

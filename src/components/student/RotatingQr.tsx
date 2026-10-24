@@ -27,12 +27,25 @@ export function RotatingQr() {
   }, []);
 
   const left = Math.max(0, Math.ceil((expiresAt - now) / 1000));
+  const R = 22, C = 2 * Math.PI * R, frac = Math.min(1, left / 30);
   return (
-    <div style={{ textAlign: "center" }}>
+    <div className="qr-live">
       {error && <div className="flash error" role="alert">{error}</div>}
-      {img ? <img src={img} alt="Your rotating meal QR code" width={320} height={320} style={{ maxWidth: "100%", height: "auto", background: "#fff", borderRadius: 8 }} />
-        : <p className="muted" aria-busy="true">Loading QR…</p>}
-      <p className="muted" aria-live="polite">{img && (left > 0 ? `Refreshes in ${left}s` : "Refreshing…")}</p>
+      <div className="qr-tile">
+        {img ? <img src={img} alt="Your rotating meal QR code" width={320} height={320} />
+          : <p className="muted" aria-busy="true">Loading QR…</p>}
+      </div>
+      {img && (
+        <div className="qr-timer" aria-live="polite">
+          <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden>
+            <circle cx="26" cy="26" r={R} fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="5" />
+            <circle cx="26" cy="26" r={R} fill="none" stroke="var(--mint)" strokeWidth="5" strokeLinecap="round"
+              strokeDasharray={C} strokeDashoffset={C * (1 - frac)} transform="rotate(-90 26 26)" style={{ transition: "stroke-dashoffset 1s linear" }} />
+            <text x="26" y="31" textAnchor="middle" fontSize="14" fontWeight="700" fill="currentColor">{left}</text>
+          </svg>
+          <span>{left > 0 ? `Refreshes in ${left}s` : "Refreshing…"}</span>
+        </div>
+      )}
     </div>
   );
 }

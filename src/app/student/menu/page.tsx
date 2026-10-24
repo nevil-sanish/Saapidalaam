@@ -6,6 +6,7 @@ import { addDays, cutoffAt, todayIST } from "@/lib/time";
 import { Flash } from "@/components/Shell";
 
 const DAYS = 14;
+const ART: Record<string, string> = { B: "🥞", L: "🍛", S: "☕", D: "🍲" };
 
 async function book(fd: FormData) {
   "use server";
@@ -57,57 +58,69 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
     <>
       <h1>Menu &amp; booking</h1>
       <Flash sp={sp} />
-      <p className="muted">Booking and cancelling close 24h before each meal (BR-02/03). ⭐ = special meal; cancelling opts you out.</p>
-      <div className="card scroll">
-        <table>
-          <thead><tr><th>Date</th>{ss.map((s) => <th key={s.id}>{s.label} <span className="muted">{s.start_time}</span></th>)}</tr></thead>
-          <tbody>
-            {dates.map((d) => (
-              <tr key={d}>
-                <th>{new Date(d + "T00:00:00Z").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })}</th>
-                {ss.map((s) => {
-                  const left = cutoffAt(d, s.start_time) - now;
-                  const b = mine.find((x) => x.served_on === d && x.slot_id === s.id);
-                  const items = entry(d, s.id, "veg")?.items || entry(d, s.id, "nonveg")?.items;
-                  return (
-                    <td key={s.id} style={{ minWidth: 170 }}>
-                      {items ? <div>{items}</div> : <div className="muted">Menu not set</div>}
+      <p className="muted" style={{ marginBottom: 18 }}>Booking and cancelling close 24 hours before each meal. Meals marked ⭐ are specials; cancelling one opts you out.</p>
+      {dates.map((d) => {
+        const booked = mine.filter((x) => x.served_on === d).length;
+        return (
+          <section key={d} className="day">
+            <div className="section-head">
+              <h2>{new Date(d + "T00:00:00Z").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" })}{d === from && <span className="muted"> (today)</span>}</h2>
+              <span className="muted">{booked ? `${booked} booked` : "Nothing booked"}</span>
+            </div>
+            <div className="meals">
+              {ss.map((s) => {
+                const left = cutoffAt(d, s.start_time) - now;
+                const b = mine.find((x) => x.served_on === d && x.slot_id === s.id);
+                const items = entry(d, s.id, "veg")?.items || entry(d, s.id, "nonveg")?.items;
+                const special = (["veg", "nonveg"] as const).some((diet) => entry(d, s.id, diet)?.special_price != null);
+                return (
+                  <article key={s.id} className="meal-card">
+                    <div className="row" style={{ justifyContent: "space-between" }}>
+                      <span className="tag">{s.start_time} – {s.end_time}</span>
+                      {special && <span className="tag">⭐ Special</span>}
+                    </div>
+                    <div className="plate" aria-hidden>{ART[s.code] ?? "🍽️"}</div>
+                    <h3>{s.label}</h3>
+                    <p>{items ?? "Menu not set yet."}</p>
+                    <div className="prices">
                       {(["veg", "nonveg"] as const).map((diet) => {
                         const e = entry(d, s.id, diet), reg = regular(s.id, diet);
                         const sp = e?.special_price;
                         return (
-                          <div key={diet} className="muted" style={{ fontSize: 13 }}>
-                            {diet === "veg" ? "Veg" : "Non-veg"}: {sp != null ? <>⭐ {rupees(sp)}{reg != null && sp > reg && <> (+{rupees(sp - reg)})</>}</> : reg != null ? rupees(reg) : "—"}
-                          </div>
+                          <span key={diet}>
+                            <small>{diet === "veg" ? "Veg" : "Non-veg"}</small>
+                            <b className="price">{sp != null ? rupees(sp) : reg != null ? rupees(reg) : "—"}</b>
+                            {sp != null && reg != null && sp > reg && <small>+{rupees(sp - reg)} extra</small>}
+                          </span>
                         );
                       })}
-                      <div className={left > 0 ? "muted" : "bad"} style={{ fontSize: 12 }}>{countdown(left)}</div>
-                      {b ? (
-                        <div className="row">
-                          <span className="pill ok">{b.status} · {b.diet}{b.is_special && " ⭐"} · {rupees(b.price_snapshot)}</span>
-                          {b.status === "booked" && left > 0 && (
-                            <form action={cancel}><input type="hidden" name="id" value={b.id} />
-                              <button className="secondary">{b.is_special ? "Opt out" : "Cancel"}</button></form>
-                          )}
-                        </div>
-                      ) : left > 0 && (
-                        <div className="row">
-                          {(["veg", "nonveg"] as const).map((diet) => (
-                            <form key={diet} action={book}>
-                              <input type="hidden" name="date" value={d} /><input type="hidden" name="slot" value={s.id} /><input type="hidden" name="diet" value={diet} />
-                              <button aria-label={`Book ${diet} ${s.label} on ${d}`}>{diet === "veg" ? "Book veg" : "Book non-veg"}</button>
-                            </form>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    </div>
+                    <small className={left > 0 ? "muted" : "bad"}>{left > 0 ? `Booking ${countdown(left)}` : "Booking closed"}</small>
+                    {b ? (
+                      <div className="foot">
+                        <span className={`pill ${b.status}`}>{b.status === "booked" ? "Booked" : b.status === "locked" ? "Locked" : b.status === "served" ? "Eaten" : b.status} · {b.diet === "veg" ? "Veg" : "Non-veg"}{b.is_special && " ⭐"} · {rupees(b.price_snapshot)}</span>
+                        {b.status === "booked" && left > 0 && (
+                          <form action={cancel}><input type="hidden" name="id" value={b.id} />
+                            <button className="secondary sm">{b.is_special ? "Opt out" : "Cancel"}</button></form>
+                        )}
+                      </div>
+                    ) : left > 0 && (
+                      <div className="foot">
+                        {(["veg", "nonveg"] as const).map((diet) => (
+                          <form key={diet} action={book}>
+                            <input type="hidden" name="date" value={d} /><input type="hidden" name="slot" value={s.id} /><input type="hidden" name="diet" value={diet} />
+                            <button className={diet === "veg" ? "sm" : "secondary sm"} aria-label={`Book ${diet} ${s.label} on ${d}`}>{diet === "veg" ? "Book veg" : "Book non-veg"}</button>
+                          </form>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
     </>
   );
 }

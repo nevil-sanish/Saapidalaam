@@ -9,12 +9,12 @@ type Result = {
 type Detector = { detect(src: HTMLVideoElement): Promise<{ rawValue: string }[]> };
 type DetectorCtor = new (o: { formats: string[] }) => Detector;
 
-const LABEL: Record<Result["result"], [string, string]> = {
-  served: ["✅ Booked → served", "ok"],
-  already_served: ["⚠️ Already served", "warn"],
-  no_booking: ["❌ No booking for this slot", "bad"],
-  invalid_token: ["❌ Invalid or expired code", "bad"],
-  outside_window: ["❌ Outside serving window", "bad"],
+const LABEL: Record<Result["result"], [string, string, string]> = {
+  served: ["Served", "ok", "✓"],
+  already_served: ["Already served", "warn", "!"],
+  no_booking: ["No booking for this slot", "bad", "✕"],
+  invalid_token: ["Invalid or expired code", "bad", "✕"],
+  outside_window: ["Outside serving window", "bad", "✕"],
 };
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", timeStyle: "short" });
 
@@ -74,28 +74,34 @@ export function Scanner() {
   return (
     <>
       <h1>Scanner</h1>
-      <div className="card">
-        <video ref={video} muted playsInline aria-label="Camera preview for QR scanning"
-          style={{ width: "100%", maxWidth: 420, borderRadius: 8, display: camMsg ? "none" : "block", background: "#000" }} />
-        {camMsg && <p className="muted" role="status">{camMsg}</p>}
-        <form className="inline" onSubmit={(e) => { e.preventDefault(); submit(paste, "qr"); setPaste(""); }}>
-          <label htmlFor="tok" className="muted">QR token</label>
-          <input id="tok" value={paste} maxLength={200} onChange={(e) => setPaste(e.target.value)} placeholder="Paste token" />
-          <button>Check</button>
-        </form>
+      <div className="bento">
+        <section className="card dark scan-stage span-7">
+          <div className="scan-frame">
+            <video ref={video} muted playsInline aria-label="Camera preview for QR scanning" style={{ display: camMsg ? "none" : "block" }} />
+            {camMsg && <p className="muted scan-msg" role="status">{camMsg}</p>}
+            <i className="corner tl" aria-hidden /><i className="corner tr" aria-hidden /><i className="corner bl" aria-hidden /><i className="corner br" aria-hidden />
+          </div>
+          <form className="scan-form" onSubmit={(e) => { e.preventDefault(); submit(paste, "qr"); setPaste(""); }}>
+            <label htmlFor="tok" className="muted">QR token</label>
+            <input id="tok" value={paste} maxLength={200} onChange={(e) => setPaste(e.target.value)} placeholder="Paste token" />
+            <button className="mint">Check</button>
+          </form>
+        </section>
+
+        <section className="card span-5 backup-card">
+          <h2>Backup code</h2>
+          <p className="muted">For students whose phone can&apos;t show the QR. Check their face against the photo.</p>
+          <form className="scan-form" onSubmit={(e) => { e.preventDefault(); submit(code, "backup"); setCode(""); }}>
+            <label htmlFor="code" className="sr-only">Backup code</label>
+            <input id="code" className="code-input" value={code} maxLength={8} minLength={8} required autoComplete="off" autoCapitalize="characters"
+              placeholder="8-character code"
+              onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} />
+            <button>Verify</button>
+          </form>
+        </section>
       </div>
 
-      <div className="card">
-        <form className="inline" onSubmit={(e) => { e.preventDefault(); submit(code, "backup"); setCode(""); }}>
-          <label htmlFor="code">Backup code</label>
-          <input id="code" value={code} maxLength={8} minLength={8} required autoComplete="off" autoCapitalize="characters"
-            style={{ textTransform: "uppercase", letterSpacing: 2 }}
-            onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} />
-          <button>Verify</button>
-        </form>
-      </div>
-
-      <div aria-live="polite">
+      <div aria-live="polite" style={{ marginTop: 18 }}>
         {err && <div className="flash error">{err}</div>}
         {res && <ResultCard r={res} />}
       </div>
@@ -104,21 +110,24 @@ export function Scanner() {
 }
 
 function ResultCard({ r }: { r: Result }) {
-  const [label, tone] = LABEL[r.result];
-  const color = `var(--${tone === "ok" ? "good" : tone})`;
+  const [label, tone, mark] = LABEL[r.result];
   return (
-    <div className="card" style={{ borderColor: color, borderWidth: 3 }}>
-      <div className="row" style={{ alignItems: "flex-start", gap: 16 }}>
-        {r.photoUrl && <img src={r.photoUrl} alt={r.student ? `Photo of ${r.student.full_name}` : "Student photo"} width={140} height={140}
-          style={{ objectFit: "cover", borderRadius: 8, background: "var(--line)" }} />}
-        <div>
-          <p className={tone} style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{label}</p>
-          {r.result === "already_served" && r.servedAt && <p className="warn">at {time(r.servedAt)}{r.servedBy ? ` by ${r.servedBy}` : ""}</p>}
-          {r.student && <p style={{ fontSize: 20, margin: "8px 0 0" }}><b>{r.student.full_name}</b> · {r.student.roll_no ?? "no roll no"}</p>}
-          {r.slot && <p className="muted">{r.slot}</p>}
-          {r.flagged && <p className="pill warn" style={{ fontSize: 16, borderColor: "var(--warn)" }}>BACKUP CODE — check face</p>}
+    <section className={`card scan-result ${tone}`}>
+      <div className="sr-photo">
+        {r.photoUrl
+          ? <img src={r.photoUrl} alt={r.student ? `Photo of ${r.student.full_name}` : "Student photo"} width={180} height={180} />
+          : <span aria-hidden>{mark}</span>}
+      </div>
+      <div className="sr-body">
+        <p className="sr-verdict">{label}</p>
+        {r.result === "already_served" && r.servedAt && <p className="sr-sub">At {time(r.servedAt)}{r.servedBy ? ` by ${r.servedBy}` : ""}</p>}
+        {r.student && <p className="sr-name">{r.student.full_name}</p>}
+        <div className="row">
+          {r.student && <span className="pill">{r.student.roll_no ?? "No roll no"}</span>}
+          {r.slot && <span className="pill">{r.slot}</span>}
+          {r.flagged && <span className="pill flag">Backup code — check face</span>}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

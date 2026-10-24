@@ -12,10 +12,11 @@ export default async function Payable({ searchParams }: { searchParams: Promise<
     <>
       <h1>Amount payable to the mess</h1>
       <RangePicker path="/manager/payable" range={range} />
-      <div className="grid">
-        <div className="card stat"><b>{rupees(p.amount)}</b><span>Payable for {range.from} to {range.to}</span></div>
-        <div className="card stat"><b>{p.meals}</b><span>Charged meals</span></div>
-      </div>
+      <section className="card mint payable-hero">
+        <span>Payable for {range.from} to {range.to}</span>
+        <b>{rupees(p.amount)}</b>
+        <span>{p.meals} charged meals</span>
+      </section>
       <p className="muted">Sum of meal charges posted at cutoff for meals dated in this period (served and no-show both count). Aggregate only.</p>
     </>
   );
