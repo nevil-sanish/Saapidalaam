@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { supa } from "@/lib/auth";
+import { supabaseServer } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
+  const supabase = await supabaseServer();
   const origin = process.env.APP_URL ?? req.nextUrl.origin;
-  const sb = await supa();
-  const { data, error } = await sb.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: `${origin}/auth/callback`, queryParams: { prompt: "select_account" } },
   });

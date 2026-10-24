@@ -1,7 +1,7 @@
-import { test } from "vitest";
+import { test } from "node:test";
 import assert from "node:assert/strict";
-import { toPaise, rupees } from "./money";
-import { cutoffAt, slotStart, todayIST } from "./time";
+import { toPaise, rupees } from "./money.ts";
+import { cutoffAt, slotStart, todayIST } from "./time.ts";
 
 test("money", () => {
   assert.equal(toPaise("30000"), 3_000_000);

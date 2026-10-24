@@ -10,5 +10,3 @@ supabase/.branches/
 next-env.d.ts
 data/
 .next-build/
-.turbo/
-.env*.local
