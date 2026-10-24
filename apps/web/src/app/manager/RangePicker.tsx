@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { addDays } from "@saap/shared/time";
+import { addDays } from "@/lib/time";
 import type { Range } from "@/lib/reports";
 
 /** GET form for ?view=&from= plus prev/next links. Shared by demand and payable pages. */
