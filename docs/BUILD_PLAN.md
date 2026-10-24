@@ -8,37 +8,22 @@
 
 | Layer | Choice | Why |
 |---|---|---|
-| Monorepo | pnpm workspaces + Turborepo | Shared types/logic between web and mobile |
-| Web (admin, manager, staff) | Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui, on **Vercel** | One app, role-based routes |
-| Mobile (student, staff) | Expo (React Native) + TypeScript + Expo Router | One codebase, push via Expo Notifications, camera for scanning |
+| App (all roles) | Single Next.js 15 (App Router) + TypeScript + Tailwind, on **Vercel** | One web app, role-based routes `/student /staff /manager /admin` (D-09: no mobile app, no monorepo) |
 | Backend | **Supabase**: Postgres, Auth (Google), Storage, Edge Functions, pg_cron | RLS + SQL functions keep money logic in one transactional place |
 | Validation | Zod (shared) | Same schemas on client and Edge Functions |
 | Server state | TanStack Query | Caching + realtime invalidation |
-| Testing | Vitest (shared), pgTAP (DB), Playwright (web e2e) | |
+| Testing | Vitest (lib), pgTAP (DB) | |
 | CI | GitHub Actions | lint, typecheck, test, `supabase db lint` |
 
 ## 2. Repository layout
 
 ```
-mess-app/
-├── CLAUDE.md                  # agent instructions (auto-loaded by Claude CLI)
-├── docs/
-│   ├── PRODUCT.md
-│   ├── BUILD_PLAN.md
-│   ├── EXECUTION_PLAN.md
-│   ├── MEMORY_PLAN.md
-│   └── memory/                # living memory (see MEMORY_PLAN.md)
-├── apps/
-│   ├── web/                   # Next.js: /admin, /manager, /staff
-│   └── mobile/                # Expo: (student) and (staff) route groups
-├── packages/
-│   ├── shared/                # zod schemas, types, money + time utils, constants
-│   └── supabase-client/       # typed client, generated DB types, query hooks
-└── supabase/
-    ├── migrations/            # numbered SQL, one module per file group
-    ├── functions/             # Edge Functions (Deno)
-    ├── tests/                 # pgTAP
-    └── seed.sql
+saapidalaam/
+├── CLAUDE.md  MEMORY.md
+├── docs/ (PRODUCT, BUILD_PLAN, EXECUTION_PLAN, MEMORY_PLAN, memory/)
+├── src/app/{student,staff,manager,admin,login,auth}/
+├── src/lib/                   # money, time, zod schemas, supabase clients, qr
+└── supabase/{migrations,tests,seed.sql,config.toml}
 ```
 
 ## 3. Modules
@@ -55,11 +40,11 @@ Each module = migration(s) + RLS + SQL functions + shared types + UI + tests. Bu
 | M5 | `patterns` | Weekly/monthly patterns, materialisation, daily extension |
 | M6 | `specials` | Special meals, auto-move, opt-out |
 | M7 | `scanning` | QR token, backup code, scan RPC, scan log |
-| M8 | `student-app` | All student screens |
-| M9 | `staff-app` | Scanner (mobile + web), live counts |
+| M8 | `student-web` | All student screens (web) |
+| M9 | `staff-web` | Browser-camera scanner, backup code input, live counts |
 | M10 | `manager-web` | Demand views, payable, export |
 | M11 | `admin-web` | Config, finance, audit, reports |
-| M12 | `notifications` | Push tokens, triggers, scheduled reminders |
+| M12 | `notifications` | In-app notifications table, triggers, scheduled reminders |
 | M13 | `hardening` | Load test, security review, backups, monitoring |
 
 ## 4. Data model (Postgres)
@@ -111,7 +96,7 @@ scans (id, booking_id null, student_id, staff_id, method: qr|backup,
        scanned_at, device_info text)
 
 -- M12
-push_tokens (user_id, token text, platform, updated_at)
+notifications (id, user_id, kind, title, body, read_at, created_at)   -- D-09: in-app instead of push
 audit_log (id, actor_id, action, entity, entity_id, diff jsonb, at)
 ```
 
@@ -129,8 +114,8 @@ audit_log (id, actor_id, action, entity, entity_id, diff jsonb, at)
 | Lock at cutoff + post charge | pg_cron every 5 min → `lock_due_bookings()` | BR-03, BR-13 |
 | Mark no-shows | pg_cron after each slot end → `mark_no_shows()` | BR-14 |
 | Extend weekly patterns | pg_cron daily 00:30 IST → `extend_patterns()` | BR-06 |
-| QR token generation | Mobile, from a short-lived token fetched via Edge Function `qr-token` | Secret never stored on device long-term |
-| Scan | Edge Function `scan` → SQL `serve_booking` | Verify HMAC, then transactional serve |
+| QR token generation | Server route `/api/qr-token` returns a ready 30s token; student page refreshes every 25s | Secret never leaves the server |
+| Scan | SQL `scan_qr` / `scan_backup` (HMAC verified in Postgres via pgcrypto) | Verify + transactional serve in one call |
 | Notifications | Edge Function `notify` + DB triggers / cron | |
 
 **Rule:** the client never writes to `bookings`, `ledger_entries`, `deposits` or `scans` directly. RLS gives students `select` on their own rows only; all writes go through RPC.
@@ -158,7 +143,8 @@ Role comes from a custom JWT claim set by a Supabase Auth hook reading `profiles
 
 - Google OAuth via Supabase. A `before user created` auth hook rejects any email not ending in `@iiitkottayam.ac.in` **unless** it is in `role_allowlist`. **BR-40, BR-41**
 - New students get `role = student`. Allowlisted emails get their listed role.
-- First login forces photo upload (mobile camera) before booking is enabled.
+- First login forces photo upload (browser camera / file) before booking is enabled.
+- Staff/manager/admin without a college email sign in with an email magic link; the allowlist still gates them (open question 1 → D-10).
 
 ## 8. Time handling
 

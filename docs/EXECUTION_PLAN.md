@@ -1,5 +1,7 @@
 # Execution Plan — Team, Timeline, Tasks
 
+> **D-09: web app only.** Mobile tasks (T-04, T-11, T-25…T-27, T-32, T-33, T-40, T-52) are delivered as web screens in the same Next.js app.
+
 > *Who* builds *what* and *when*. Team of 6. Names are placeholders. Start: Mon 26 Oct 2026.
 > Each task ID (T-xx) maps to a branch and is completed by one or more commits. Modules M0–M13 are defined in `BUILD_PLAN.md`.
 

@@ -27,8 +27,8 @@ The mess cooks for everyone whether they eat or not, students pay flat fees for 
 
 | Role | Who | Platform | Can see finances? |
 |---|---|---|---|
-| Student | Any `@iiitkottayam.ac.in` account | Mobile app (Android/iOS) + push notifications | Own only |
-| Staff | Mess counter staff | Mobile app + web | No |
+| Student | Any `@iiitkottayam.ac.in` account | Web app (mobile browser friendly) + in-app notifications | Own only |
+| Staff | Mess counter staff | Web app (phone/laptop browser, camera scanner) | No |
 | Manager | Mess contractor (third party) | Web | Only aggregate amount payable to the mess, never per student |
 | Admin | College authority | Web | Everything |
 
@@ -71,7 +71,7 @@ The mess cooks for everyone whether they eat or not, students pay flat fees for 
 - **BR-20** The admin creates a special meal for a date + slot with a special price, at least **3 days** before (so students have time before the cutoff).
 - **BR-21** Students who already have a booking for that slot are moved to the special meal automatically. They see the **extra amount** and can opt out until cutoff. Opting out cancels that slot's booking.
 - **BR-22** Students without a booking can prebook the special meal until cutoff.
-- **BR-23** Every affected student gets a push notification when a special meal is announced.
+- **BR-23** Every affected student gets an (in-app) notification when a special meal is announced.
 
 ### Counter / scanning
 - **BR-30** Each student has a **rotating QR** in the app (signed token, valid about 30s), so a screenshot can't be reused.
@@ -87,8 +87,8 @@ The mess cooks for everyone whether they eat or not, students pay flat fees for 
 
 ## 6. User stories
 
-### Student (mobile)
-1. Sign in with my college Google account; first login asks for a profile photo (used for verification).
+### Student (web)
+1. Sign in with my college Google account; first login asks for a profile photo (browser camera or file upload) (used for verification).
 2. See the monthly menu by day and slot, with veg/non-veg prices.
 3. Set a **weekly pattern** (pick slots + diet per weekday) or a **monthly package** for a month.
 4. Book or cancel a single meal (before cutoff); see a clear countdown to each cutoff.
@@ -97,7 +97,7 @@ The mess cooks for everyone whether they eat or not, students pay flat fees for 
 7. **Transparency dashboard**: deposit, meals consumed, meals scheduled (pattern vs one-off), amount spent, committed amount, **expected refund now**, full ledger history.
 8. Get notifications: menu published, special meal, cutoff reminder (optional), low balance, monthly package confirmation needed.
 
-### Staff (mobile + web)
+### Staff (web)
 1. Scan QR (camera), or type a backup code.
 2. See photo + result instantly.
 3. See the live count for the current slot: booked, served, **remaining**, with a searchable remaining list.
@@ -147,6 +147,7 @@ The mess cooks for everyone whether they eat or not, students pay flat fees for 
 | D-06 | Single mess; students only. |
 | D-07 | No offline scanning; the scanner shows a clear network error and the backup code path still needs network. |
 | D-08 | Rotating QR + backup code; photo shown on every scan. |
+| D-09 | **Web app only.** Every role (student, staff, manager, admin) uses one responsive web app with role-based routes. No mobile app; push notifications become in-app notifications. |
 
 ## 10. Open questions (resolve before the phase noted)
 
