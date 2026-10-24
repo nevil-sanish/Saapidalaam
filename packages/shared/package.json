@@ -1,0 +1,9 @@
+{
+  "name": "@saap/shared",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./money": "./src/money.ts", "./time": "./src/time.ts", "./schemas": "./src/schemas.ts" },
+  "scripts": { "test": "vitest run", "typecheck": "tsc --noEmit" },
+  "dependencies": { "zod": "3.25.76" },
+  "devDependencies": { "vitest": "3.2.4", "typescript": "5.9.2" }
+}
