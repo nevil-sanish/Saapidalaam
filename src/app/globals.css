@@ -1,0 +1,26 @@
+:root { --bg:#f7f7f5; --fg:#1b1b1b; --muted:#6b6b6b; --card:#fff; --line:#e3e3df; --accent:#0b6e4f; --warn:#b45309; --bad:#b91c1c; --good:#15803d; }
+@media (prefers-color-scheme: dark) { :root { --bg:#121212; --fg:#eee; --muted:#a3a3a3; --card:#1c1c1c; --line:#2e2e2e; --accent:#34d399; } }
+* { box-sizing: border-box; }
+body { margin:0; font: 15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+a { color: var(--accent); }
+header.top { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--card); }
+header.top nav { display:flex; gap:12px; flex-wrap:wrap; }
+header.top .who { margin-left:auto; color:var(--muted); font-size:13px; }
+main { max-width:1100px; margin:0 auto; padding:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+.grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.stat b { display:block; font-size:22px; }
+.stat span { color:var(--muted); font-size:13px; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+.scroll { overflow-x:auto; }
+input, select, button, textarea { font:inherit; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--fg); }
+button { background:var(--accent); color:#fff; border:0; cursor:pointer; }
+button.secondary { background:transparent; color:var(--fg); border:1px solid var(--line); }
+form.inline { display:inline-flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.muted { color:var(--muted); }
+.ok { color:var(--good); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; border:1px solid var(--line); }
+.flash { padding:10px 12px; border-radius:8px; margin-bottom:12px; border:1px solid var(--line); }
+.flash.error { border-color: var(--bad); color: var(--bad); }
