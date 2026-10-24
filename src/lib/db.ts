@@ -36,8 +36,8 @@ async function demoSeed() {
     await sql`insert into role_allowlist (email, role) values (${email}, ${role}) on conflict do nothing`;
     await sql`insert into profiles (email, full_name, role, pw_hash) values (${email}, ${name}, ${role}, ${hashPw("password")})`;
   }
-  for (const [email, name, roll] of [["anu.24bcs01@iiitkottayam.ac.in", "Anu S", "2024BCS0001"], ["ravi.24bcs02@iiitkottayam.ac.in", "Ravi K", "2024BCS0002"]]) {
-    const [p] = await sql`insert into profiles (email, full_name, roll_no, pw_hash, backup_code_hash) values (${email}, ${name}, ${roll}, ${hashPw("password")}, ${codeHash("TESTCODE")}) returning id`;
+  for (const [email, name, roll, code] of [["anu.24bcs01@iiitkottayam.ac.in", "Anu S", "2024BCS0001", "TESTCODE"], ["ravi.24bcs02@iiitkottayam.ac.in", "Ravi K", "2024BCS0002", "RAVICODE"]]) {
+    const [p] = await sql`insert into profiles (email, full_name, roll_no, pw_hash, backup_code_hash) values (${email}, ${name}, ${roll}, ${hashPw("password")}, ${codeHash(code)}) returning id`;
     await sql`insert into deposits (student_id, amount, txn_ref, status, verified_at) values (${p.id}, 3000000, 'SEED-TXN', 'verified', now())`;
     await sql`insert into ledger_entries (student_id, kind, amount, ref, note) values (${p.id}, 'deposit', 3000000, 'SEED-TXN', 'seed')`;
   }

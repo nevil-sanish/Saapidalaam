@@ -19,7 +19,7 @@ npm run dev            # migrations + seed run on first request
 npm test               # unit (money/time)
 npm run test:engine    # BR scenario tests against Postgres (db: saapidalaam_test)
 ```
-Demo accounts (password `password`, disable with `DEMO_SEED=off`): `admin@iiitkottayam.ac.in`, `manager@mess.test`, `staff@mess.test`, `anu.24bcs01@iiitkottayam.ac.in`. The students' backup code is `TESTCODE`.
+Demo accounts (password `password`, disable with `DEMO_SEED=off`): `admin@iiitkottayam.ac.in`, `manager@mess.test`, `staff@mess.test`, `anu.24bcs01@iiitkottayam.ac.in`. Backup codes: Anu `TESTCODE`, Ravi `RAVICODE`.
 
 ## Deploy
 - **Supabase** (CLI): `npx supabase login`, then `npx supabase link --project-ref <ref>`, `npx supabase db push`, and `npx supabase config push` (this also enables Google auth with `SUPABASE_AUTH_EXTERNAL_GOOGLE_*`).
