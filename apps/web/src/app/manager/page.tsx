@@ -1,12 +1,10 @@
-import { tick } from "@/lib/db";
 import { demand, rangeFor, wastage } from "@/lib/reports";
-import { todayIST } from "@/lib/time";
+import { todayIST } from "@saap/shared/time";
 import { RangePicker } from "./RangePicker";
 
 type SP = Promise<{ view?: string; from?: string }>;
 
 export default async function Demand({ searchParams }: { searchParams: SP }) {
-  await tick();
   const sp = await searchParams;
   const range = rangeFor(sp.view, sp.from);
   const [rows, waste] = await Promise.all([demand(range.from, range.to), wastage(range.from, range.to)]);

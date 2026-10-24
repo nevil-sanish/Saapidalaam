@@ -1,5 +1,4 @@
 import { currentUser } from "@/lib/auth";
-import { tick } from "@/lib/db";
 import { demand, rangeFor } from "@/lib/reports";
 
 const cell = (v: string | number) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
@@ -7,7 +6,6 @@ const cell = (v: string | number) => (/[",\n]/.test(String(v)) ? `"${String(v).r
 export async function GET(req: Request) {
   const u = await currentUser();
   if (!u || (u.role !== "manager" && u.role !== "admin")) return new Response("Forbidden", { status: 403 });
-  await tick();
   const p = new URL(req.url).searchParams;
   const range = rangeFor(p.get("view") ?? undefined, p.get("from") ?? undefined);
   const rows = await demand(range.from, range.to); // aggregate only (BR-42)
