@@ -22,12 +22,16 @@ export const sql: Sql = g.__sql ?? (g.__sql = postgres(process.env.DATABASE_URL 
 type Tx = postgres.TransactionSql<{ bigint: number }>;
 
 // ---------- boot: migrations + demo seed ----------
-export const ready = () => (g.__ready ??= boot());
+export const ready = () => (g.__ready ??= boot().catch((e) => { g.__ready = undefined; throw e; })); // retry boot after a failure
 async function boot() {
   const dir = join(process.cwd(), "supabase/migrations");
-  for (const f of readdirSync(dir).sort()) await sql.unsafe(readFileSync(join(dir, f), "utf8"));
-  if ((await sql`select count(*)::int as n from meal_slots`)[0].n === 0)
-    await sql.unsafe(readFileSync(join(process.cwd(), "supabase/seed.sql"), "utf8"));
+  // One instance migrates at a time (several workers/instances may boot together).
+  await sql.begin(async (t) => {
+    await t`select pg_advisory_xact_lock(724242)`;
+    for (const f of readdirSync(dir).sort()) await t.unsafe(readFileSync(join(dir, f), "utf8"));
+    if ((await t`select count(*)::int as n from meal_slots`)[0].n === 0)
+      await t.unsafe(readFileSync(join(process.cwd(), "supabase/seed.sql"), "utf8"));
+  });
   if (process.env.DEMO_SEED === "on" && (await sql`select count(*)::int as n from profiles`)[0].n === 0) await demoSeed();
 }
 async function demoSeed() {
