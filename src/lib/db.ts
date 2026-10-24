@@ -28,10 +28,10 @@ async function boot() {
   for (const f of readdirSync(dir).sort()) await sql.unsafe(readFileSync(join(dir, f), "utf8"));
   if ((await sql`select count(*)::int as n from meal_slots`)[0].n === 0)
     await sql.unsafe(readFileSync(join(process.cwd(), "supabase/seed.sql"), "utf8"));
-  if (process.env.DEMO_SEED !== "off" && (await sql`select count(*)::int as n from profiles`)[0].n === 0) await demoSeed();
+  if (process.env.DEMO_SEED === "on" && (await sql`select count(*)::int as n from profiles`)[0].n === 0) await demoSeed();
 }
 async function demoSeed() {
-  // Fake accounts only (password "password"). Disable with DEMO_SEED=off in production.
+  // Fake accounts for local tests only (DEMO_SEED=on). Production uses Google sign-in only.
   for (const [email, name, role] of [["admin@iiitkottayam.ac.in", "College Admin", "admin"], ["manager@mess.test", "Mess Manager", "manager"], ["staff@mess.test", "Counter Staff", "staff"]] as const) {
     await sql`insert into role_allowlist (email, role) values (${email}, ${role}) on conflict do nothing`;
     await sql`insert into profiles (email, full_name, role, pw_hash) values (${email}, ${name}, ${role}, ${hashPw("password")})`;

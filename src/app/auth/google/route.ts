@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const origin = process.env.APP_URL ?? req.nextUrl.origin;
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${origin}/auth/callback`, queryParams: { prompt: "select_account" } },
+    options: { redirectTo: `${origin}/auth/callback`, queryParams: { prompt: "select_account", hd: "iiitkottayam.ac.in" } },
   });
   if (error || !data.url) return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error?.message ?? "Google sign-in failed")}`);
   return NextResponse.redirect(data.url);

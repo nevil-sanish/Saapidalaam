@@ -8,7 +8,7 @@
     "start": "next start -p ${PORT:-3000}",
     "typecheck": "tsc --noEmit",
     "test": "node --test src/lib/*.test.ts",
-    "test:engine": "DATABASE_URL=${TEST_DATABASE_URL:-postgres://postgres:dev@localhost:54329/saapidalaam_test} tsx --conditions=react-server --test tests/engine.test.ts"
+    "test:engine": "DEMO_SEED=on DATABASE_URL=${TEST_DATABASE_URL:-postgres://postgres:dev@localhost:54329/saapidalaam_test} tsx --conditions=react-server --test tests/engine.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

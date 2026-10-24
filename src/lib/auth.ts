@@ -46,13 +46,14 @@ export const homeFor = (r: Role) => `/${r}`;
 export async function resolveLogin(email: string, fullName: string) {
   await ready();
   email = email.trim().toLowerCase();
+  if (!email.endsWith(COLLEGE_DOMAIN)) throw new Error(`Only ${COLLEGE_DOMAIN} Google accounts may sign in`);
   const [existing] = await sql`select id, is_active from profiles where email = ${email}`;
   if (existing) {
     if (!existing.is_active) throw new Error("Account deactivated");
     return existing.id as string;
   }
+  // Google + college domain only for every role; the allowlist only decides the role (BR-40/41).
   const [al] = await sql`select role from role_allowlist where email = ${email}`;
-  if (!al && !email.endsWith(COLLEGE_DOMAIN)) throw new Error(`Only ${COLLEGE_DOMAIN} accounts or allowlisted staff may sign in`);
   const [p] = await sql`insert into profiles (email, full_name, role) values (${email}, ${fullName || email}, ${al?.role ?? "student"}) returning id`;
   return p.id as string;
 }
